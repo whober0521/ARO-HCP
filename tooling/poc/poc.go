@@ -11,68 +11,72 @@ import (
 type configProviderImpl struct {
 	baseVariableOverrides *VariableOverrides
 	config                string
+	region                string
+	user                  string
 }
 
-func Print(configPath string) error {
-	config := NewConfigProvider(configPath)
+func Print(region, user string) error {
+	config := NewConfigProvider("poc/config.yaml", region, user)
 
-	println("Clouds:")
-	cloud, err := config.GetAllClouds()
-	if err != nil {
-		return err
-	}
+	// ===================  print config values  ===================
+	// println("Clouds:")
+	// cloud, err := config.GetAllClouds()
+	// if err != nil {
+	// 	return err
+	// }
 
-	for _, c := range cloud {
-		println(c)
-		cloudv, err := config.GetCloudVariables(context.Background(), c)
+	// for _, c := range cloud {
+	// 	println(c)
+	// 	cloudv, err := config.GetCloudVariables(context.Background(), c)
 
-		if err != nil {
-			return err
-		}
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-		for k, v := range cloudv {
-			println(k, v)
-		}
-	}
+	// 	for k, v := range cloudv {
+	// 		println(k, v)
+	// 	}
+	// }
 
-	println()
-	println("DeployEnvs:")
-	envs, err := config.GetAllDeployEnvs()
-	if err != nil {
-		return err
-	}
+	// println()
+	// println("DeployEnvs:")
+	// envs, err := config.GetAllDeployEnvs()
+	// if err != nil {
+	// 	return err
+	// }
 
-	for _, e := range envs {
-		println(e.Cloud, e.DeployEnv)
-		envv, err := config.GetDeployenvVariables(context.Background(), e.Cloud, e.DeployEnv)
-		if err != nil {
-			return err
-		}
+	// for _, e := range envs {
+	// 	println(e.Cloud, e.DeployEnv)
+	// 	envv, err := config.GetDeployenvVariables(context.Background(), e.Cloud, e.DeployEnv)
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-		for k, v := range envv {
-			println(k, v)
-		}
-	}
+	// 	for k, v := range envv {
+	// 		println(k, v)
+	// 	}
+	// }
 
-	println()
-	println("Regions:")
-	regions, err := config.GetAllRegions()
-	if err != nil {
-		return err
-	}
+	// println()
+	// println("Regions:")
+	// regions, err := config.GetAllRegions()
+	// if err != nil {
+	// 	return err
+	// }
 
-	for _, r := range regions {
-		println(r.Cloud, r.DeployEnv, r.Region)
+	// for _, r := range regions {
+	// 	println(r.Cloud, r.DeployEnv, r.Region)
 
-		envv, err := config.GetVariables(context.Background(), r.Cloud, r.DeployEnv, r.Region)
-		if err != nil {
-			return err
-		}
+	// 	envv, err := config.GetVariables(context.Background(), r.Cloud, r.DeployEnv, r.Region)
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-		for k, v := range envv {
-			println(k, v)
-		}
-	}
+	// 	for k, v := range envv {
+	// 		println(k, v)
+	// 	}
+	// }
+	// ===================  print config values  ===================
 
 	// Create output file
 	output, err := os.Create("poc/output/helm.sh")
@@ -121,9 +125,11 @@ func Print(configPath string) error {
 	return nil
 }
 
-func NewConfigProvider(config string) *configProviderImpl {
+func NewConfigProvider(config, region, user string) *configProviderImpl {
 	return &configProviderImpl{
 		config: config,
+		region: region,
+		user:   user,
 	}
 }
 
@@ -150,6 +156,10 @@ func (cp *configProviderImpl) GetCloudVariables(ctx context.Context, cloud strin
 				variables[k] = v
 			}
 		}
+	}
+
+	if err == nil {
+		variables, err = NewDefaultVarHandler(cp.region, cp.user).ReplaceVariables(variables)
 	}
 
 	return variables, nil
@@ -190,6 +200,10 @@ func (cp *configProviderImpl) GetDeployenvVariables(ctx context.Context, cloud, 
 				}
 			}
 		}
+	}
+
+	if err == nil {
+		variables, err = NewDefaultVarHandler(cp.region, cp.user).ReplaceVariables(variables)
 	}
 
 	return variables, nil
@@ -241,7 +255,7 @@ func (cp *configProviderImpl) GetVariables(ctx context.Context, cloud, deployEnv
 		}
 	}
 	if err == nil {
-		variables, err = NewDefaultVarHandler().ReplaceVariables(variables)
+		variables, err = NewDefaultVarHandler(cp.region, cp.user).ReplaceVariables(variables)
 	}
 	return variables, err
 }

@@ -15,13 +15,17 @@ type varHandler struct {
 	prefix           string // usually the '$'
 	quoteSymbolLeft  string // usually the '(' or '{' or '{{'
 	quoteSymbolRight string // usually the '(' or '{' or '{{'
+	region           string
+	user             string
 }
 
-func NewDefaultVarHandler() VarHandler {
+func NewDefaultVarHandler(region, user string) VarHandler {
 	return &varHandler{
 		prefix:           "$",
 		quoteSymbolLeft:  "(",
 		quoteSymbolRight: ")",
+		region:           region,
+		user:             user,
 	}
 }
 
@@ -42,6 +46,9 @@ func (vh *varHandler) ReplaceVariables(variables Variables) (Variables, error) {
 	if len(replacedVariables) == 0 {
 		return nil, errors.New("no raw variables values found")
 	}
+
+	replacedVariables["region"] = vh.region
+	replacedVariables["user"] = vh.user
 
 	var err error
 	variableReplace := func(origin string) string {
