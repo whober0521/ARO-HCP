@@ -1,6 +1,6 @@
 # ARO HCP Tooling POC
 
-Command: `chiac@CHIAC:~/hcp/tooling$ go run .`
+Command: `chiac@CHIAC:~/hcp/tooling$ go run . --region taiwan --user chiac`
 
 ## Completed
 - Get `region` and `user` from command
